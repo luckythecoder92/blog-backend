@@ -10,8 +10,4 @@ app.use(express.urlencoded({extended:true}))
 app.use('/blog',blogRoutes)
 app.use('/user', userRoutes)
 
-
-
-
-
-module.exports ={ app}
+module.exports = app

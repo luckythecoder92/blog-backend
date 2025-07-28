@@ -1,11 +1,12 @@
 const express = require('express')
 const router = express.Router()
-const {createBlog, allBlog, deleteBlog, updateBlog}  = require('../controllers/post.controller.js')
+const authController = require('../middlewares/auth.js')
+const userController = require('../controllers/user.controller.js')
 
 
-router.post('/create', create)
-router.post('/update', update)
-router.delete('/delete', dele)
+router.get('/author', authController.authenticate, userController.getAllPosts)
+router.post('/auth/signup',authController.signUp)
+router.post('/auth/login', authController.login)
 
 
 module.exports = router 

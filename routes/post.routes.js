@@ -1,7 +1,8 @@
 const express = require('express')
 const router = express.Router()
-const {createPost,allPosts,updatePosts,deletePosts,singlePost}  = require('../controllers/post.controller.js')
+const postController = require('../controllers/post.controller.js')
 
+const authController = require('../middlewares/auth.js')
 router.get('/api/posts', allPosts)
 router.post('/api/posts', createPost)
 router.put('/api/posts/:postId', updatePosts)
