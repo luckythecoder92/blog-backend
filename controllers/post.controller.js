@@ -49,21 +49,23 @@ const allPosts = async (req, res) => {
 
 const deletePosts = async (req, res) => {
     try {
-        const post = await Post.findByIdAndRemove(req.params.postId, {
-            authorId: req.user.id
-        })
-        if (!post) return res.status(401).json({
-            success: "Fail",
-            message: 'Post with given Id not found'
-        })
-
-        if (post.authorId.toString() !== req.user.id) {
-            return res.status(401).json({
-                status: "Fail",
-                message: `You can only delete a post you created!`,
+        const post = await Post.findById(req.params.postId);
+        
+        if (!post) {
+            return res.status(404).json({
+                status: "fail",
+                message: 'Post not found'
             });
-
         }
+
+        if (post.authorId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                status: "fail",
+                message: 'You can only delete a post you created!'
+            });
+        }
+
+        await Post.findByIdAndDelete(req.params.postId);
 
         const postByUser = await User.findById(req.user._id);
         postByUser.posts.pull(post._id)
@@ -79,21 +81,37 @@ const deletePosts = async (req, res) => {
 }
 
 const updatePosts = async (req, res) => {
-    const { state, body } = req.body
+    const { state, body, title, description, tags } = req.body
     try {
-        const post = await Post.findByIdAndUpdate(req.params.postId, {
-            $set: {
-                state,
-                body
-            }
-        }, { new: true })
-
-        if (post.authorId.toString() !== req.user.id) {
-            return res.status(401).json({
-                success: "Fail",
-                message: `You can only update a post you created!`
-            })
+        const post = await Post.findById(req.params.postId);
+        
+        if (!post) {
+            return res.status(404).json({
+                status: "fail",
+                message: 'Post not found'
+            });
         }
+
+        if (post.authorId.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                status: "fail",
+                message: 'You can only update a post you created!'
+            });
+        }
+
+        const updatedPost = await Post.findByIdAndUpdate(
+            req.params.postId,
+            {
+                $set: {
+                    state,
+                    body,
+                    title,
+                    description,
+                    tags
+                }
+            },
+            { new: true, runValidators: true }
+        );
 
         res.status(201).json({
             status: "Success",
