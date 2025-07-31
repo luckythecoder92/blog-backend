@@ -1,6 +1,5 @@
 const mongoose = require('mongoose')
 const bcrypt = require('bcrypt')
-// const {z}    = require('zod')
 const validator = require("validator");
 
 const userSchema = mongoose.Schema({
@@ -10,34 +9,41 @@ const userSchema = mongoose.Schema({
     },
     email: {
         type: String,
-        required:true,
+        required: true,
         unique: true
     },
     password: {
         type: String,
-        required:true
+        required: true
     },
-      posts: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Post",
-    },]
-
-},
-{
-   timestamps: true
+    posts: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Post",
+        }
+    ]
+}, {
+    timestamps: true
 })
 
-userSchema.pre("save",async(next)=>{
-    this.password = await bcrypt.hash(this.password,12)
-    next();
-})
+// FIXED: Changed arrow function to regular function
+userSchema.pre("save", async function(next) {
+    // Only hash if password is modified or new
+    if (!this.isModified('password')) return next();
+    
+    try {
+        this.password = await bcrypt.hash(this.password, 12);
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
 
-userSchema.methods.validPassword = async function (currentPassword, storedPassword) {
-    return await bcrypt.compare(currentPassword,storedPassword)
+// FIXED: Method name and logic
+userSchema.methods.comparePassword = async function(candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password);
 }
 
-
-const User = mongoose.model('User',userSchema)
+const User = mongoose.model('User', userSchema)
 
 module.exports = User

@@ -1,7 +1,13 @@
 const jwt = require('jsonwebtoken')
 const User = require('../models/user.model.js')
+const bcrypt = require('bcrypt')
 const { promisify } = require('util')
 const { success } = require('zod')
+const app = require('../app.js')
+
+// app.use()==
+
+
 
 const signToken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -9,26 +15,27 @@ const signToken = (id) => {
     })
 }
 
-
-
 const signUp = async (req, res, next) => {
     const { name, email, password } = req.body
 
     try {
+        // No manual hashing - let the model handle it
         const newUser = await User.create({
             name,
             email,
-            password
+            password  // Plain password - model will hash it
         })
-
+        
         const token = signToken(newUser._id)
-
-        newUser.password = undefined;
-
         return res.status(201).json({
             status: "Success",
+            token,
             data: {
-                user: newUser
+                user: {
+                    id: newUser._id,
+                    name: newUser.name,
+                    email: newUser.email
+                }
             }
         })
     } catch (err) {
@@ -48,19 +55,25 @@ const signUp = async (req, res, next) => {
 
         return next(err);
     }
-
 }
 
 const login = async (req, res, next) => {
     const { email, password } = req.body
+    
     try {
+        // Check if email and password are provided
         if (!email || !password) {
-            res.status(401).json("Please provide email and password");
-            return next(new Error("Please provide email and password"));
+            return res.status(400).json({
+                status: "fail",
+                message: "Please provide email and password"
+            });
         }
 
+        // Find user and explicitly select password field
         const user = await User.findOne({ email }).select('+password')
-        if (!user && (await user.isValidPassword(password, user.password))) {
+        
+        // Check if user exists and password is correct
+        if (!user || !(await user.comparePassword(password))) {
             return res.status(401).json({
                 status: "fail",
                 message: "Incorrect email or password"
@@ -71,12 +84,10 @@ const login = async (req, res, next) => {
         res.status(200).json({
             status: "Success",
             token,
-
             data: {
                 user: {
                     id: user._id,
-                    firstname: user.firstname,
-                    lastname: user.lastname,
+                    name: user.name,
                     email: user.email
                 }
             }

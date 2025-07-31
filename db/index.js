@@ -1,11 +1,14 @@
-
-
 const mongoose = require('mongoose');
-const DB_NAME = require('../constants.js');
+
 
 async function config() {
     try {
-        await mongoose.connect(`${process.env.MONGO_URI}/${DB_NAME}`);
+        // Use full connection string from environment
+        const connectionString = process.env.MONGO_URI; // Should include database name
+        
+        console.log('Connection string:', connectionString); // Debug line
+        
+        await mongoose.connect(connectionString);
         console.log("Connected to MongoDB");
     } catch (error) {
         console.log("Error connecting to MongoDB:", error);

@@ -22,7 +22,7 @@ const createPost = async (req, res) => {
             authorId,
             readTime
         })
-        let user = await user.findById(req.user._id)
+        let user = await User.findById(req.user._id)
         user.posts.push(post._id)
         await user.save()
 
@@ -31,7 +31,7 @@ const createPost = async (req, res) => {
             post
         })
     } catch (error) {
-        throw err
+        throw error
     }
 }
 
